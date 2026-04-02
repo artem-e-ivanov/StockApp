@@ -30,7 +30,7 @@ final class StockListCell: UITableViewCell {
             symbolLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5),
             symbolLabel.widthAnchor.constraint(equalToConstant: 150)
         ])
-        symbolLabel.textColor = .darkGray
+        symbolLabel.textColor = .systemGray
         symbolLabel.font = .systemFont(ofSize: 25, weight: .bold)
         
         priceLabel = UILabel()
@@ -56,7 +56,7 @@ final class StockListCell: UITableViewCell {
             changeLabel.widthAnchor.constraint(equalToConstant: 100)
         ])
         changeLabel.textAlignment = .right
-        changeLabel.textColor = .darkGray
+        changeLabel.textColor = .systemGray
         changeLabel.font = UIFont.monospacedSystemFont(ofSize: 20, weight: .regular)
     }
     
@@ -64,6 +64,10 @@ final class StockListCell: UITableViewCell {
         symbolLabel.text = stock.symbol
         priceLabel.text = stock.price.formatted(.number.precision(.fractionLength(2)))
         changeLabel.text = stock.change.formatted(.number.precision(.fractionLength(2)))
-        changeLabel.textColor = stock.change > 0 ? .systemGreen : .systemRed
+        if stock.change == 0 {
+            changeLabel.textColor = .systemGray
+        } else {
+            changeLabel.textColor = stock.change > 0 ? .systemGreen : .systemRed
+        }
     }
 }

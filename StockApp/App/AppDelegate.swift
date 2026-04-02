@@ -21,10 +21,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     private func setup() {
         Task { [weak self] in
-            // Setup stock provider
-            let stockProvider = StockProviderMock()
+            // Setup stock provider mock
+            /*let stockProvider = StockProviderMock()
             _ = AppDIContainer.shared.register(StockProvider.self) { _ in
                 stockProvider
+            }*/
+                        
+            // Setup stock provider web
+            if let endpoint = URL(string: "wss://ws.postman-echo.com/raw") {
+                let stockProvider = StockProviderWeb(endpoint: endpoint)
+                _ = AppDIContainer.shared.register(StockProvider.self) { _ in
+                    stockProvider
+                }
             }
 
             // Setup features provider and start it

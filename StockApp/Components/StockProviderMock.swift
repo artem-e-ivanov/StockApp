@@ -9,30 +9,36 @@ import os
 import Foundation
 
 actor StockProviderMock: StockProvider {
-    private var bufferLock = OSAllocatedUnfairLock(initialState: [Stock]())
+    private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
+    private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Double]())
     private var task: Task<Void, Never>?
+    
+    deinit {
+        task?.cancel()
+    }
     
     func start() async {
         guard task == nil else { return }
         
-        bufferLock.withLock {
-            $0 = StockListProvider.stockList.map {
-                Stock(symbol: $0,
-                      price: Decimal(Double.random(in: 0...1000)),
-                      change: 0)
-            }
-        }
-        
-        task = Task {
+        task = Task { [weak self] in
             while !Task.isCancelled {
-                bufferLock.withLock { stock in
-                    stock = StockListProvider.stockList.enumerated().map { (index, symbol) in
-                        let change = Decimal(Double.random(in: -1...1))
-                        return Stock(symbol: symbol,
-                                     price: max(0, stock[index].price + change),
-                                     change: change)
-                    }
+                guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else { continue }
+
+                let stock = await self?.cacheLock.withLock { cache in
+                    let change = Double.random(in: -1...1)
+                    let price = cache[randomSymbol] ?? Double.random(in: 100...1000)
+                    cache[randomSymbol] = price + change
+
+                    return Stock(symbol: randomSymbol,
+                                 price: price,
+                                 change: change)
                 }
+                guard let stock = stock else { continue }
+
+                await self?.bufferLock.withLock { buffer in
+                    buffer[randomSymbol] = stock
+                }
+                
                 try? await Task.sleep(for: .milliseconds(50))
             }
         }
@@ -45,7 +51,8 @@ actor StockProviderMock: StockProvider {
     
     func get() async -> [Stock] {
         bufferLock.withLock { buffer in
-            return buffer
+            defer { buffer.removeAll() }
+            return Array(buffer.values)
         }
     }
 }

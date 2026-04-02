@@ -1,12 +1,12 @@
 //
-//  StockListProvider.swift
+//  StockSymbolListProvider.swift
 //  StockApp
 //
 //  Created by developer on 1/4/26.
 //
 
-final class StockListProvider {
-    nonisolated static let stockList = [
+final class StockSymbolListProvider {
+    nonisolated static let symbols = [
         "AAPL",
         "GOOG",
         "TSLA",

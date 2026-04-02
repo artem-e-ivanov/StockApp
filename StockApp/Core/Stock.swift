@@ -9,8 +9,8 @@ import Foundation
 
 nonisolated struct Stock: Hashable, Sendable {
     let symbol: String
-    let price: Decimal
-    let change: Decimal
+    let price: Double
+    let change: Double
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(symbol)

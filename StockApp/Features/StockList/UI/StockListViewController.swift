@@ -99,9 +99,26 @@ private extension StockListViewController {
     private func applyUpdates(_ stock: [Stock]?) {
         guard let stock = stock, !stock.isEmpty else { return }
 
-        var snapshot = Snapshot()
-        snapshot.appendSections([0])
-        snapshot.appendItems(stock)
+        var snapshot = dataSource.snapshot()
+        if snapshot.numberOfSections == 0 {
+            snapshot = Snapshot()
+            snapshot.appendSections([0])
+            snapshot.appendItems(stock)
+        } else {
+            var toAdd = [Stock]()
+            var toChange = [Stock]()
+            stock.forEach { newStock in
+                if let oldStock = snapshot.itemIdentifiers.first(where: { $0.symbol == newStock.symbol }) {
+                    snapshot.insertItems([newStock], afterItem: oldStock)
+                    snapshot.deleteItems([oldStock])
+                    toChange.append(newStock)
+                } else {
+                    toAdd.append(newStock)
+                }
+            }
+            snapshot.reconfigureItems(toChange)
+            snapshot.appendItems(toAdd)
+        }
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 }
