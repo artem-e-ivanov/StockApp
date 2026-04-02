@@ -21,6 +21,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     private func setup() {
         Task { [weak self] in
+            // Setup stock provider
+            let stockProvider = StockProviderMock()
+            _ = AppDIContainer.shared.register(StockProvider.self) { _ in
+                stockProvider
+            }
+
             // Setup features provider and start it
             let featureProvider = StockFeatureProvider()
             _ = AppDIContainer.shared.register(FeatureProvider.self) { _ in
