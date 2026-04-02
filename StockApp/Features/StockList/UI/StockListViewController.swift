@@ -12,6 +12,7 @@ final class StockListViewController: UIViewController {
     private typealias DataSource = UITableViewDiffableDataSource<Int, Stock>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Stock>
 
+    private var sortControl: UISegmentedControl!
     private var tableView: UITableView!
     private var dataSource: DataSource!
     private var displayLink: CADisplayLink?
@@ -23,13 +24,7 @@ final class StockListViewController: UIViewController {
         setupUI()
         setupDataSource()
     }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        startUpdates()
-    }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
@@ -38,6 +33,24 @@ final class StockListViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
+        
+        navigationItem.title = "Stock"
+        
+        let startButton = UIButton()
+        startButton.tag = 0
+        startButton.setImage(UIImage(systemName: "power.circle.fill"), for: .normal)
+        startButton.addTarget(self, action: #selector(startStopAction), for: .primaryActionTriggered)
+        let leftButtonItem = UIBarButtonItem(customView: startButton)
+        navigationItem.leftBarButtonItem = leftButtonItem
+
+        let sortControl = UISegmentedControl()
+        sortControl.addTarget(self, action: #selector(sortControlAction), for: .valueChanged)
+        let rightButtonItem = UIBarButtonItem(customView: sortControl)
+        navigationItem.rightBarButtonItem = rightButtonItem
+        sortControl.insertSegment(withTitle: "Title", at: 0, animated: false)
+        sortControl.insertSegment(withTitle: "Price", at: 1, animated: false)
+        sortControl.insertSegment(withTitle: "Change", at: 2, animated: false)
+        self.sortControl = sortControl
 
         tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -72,9 +85,30 @@ final class StockListViewController: UIViewController {
     
     @objc private func tick(_ link: CADisplayLink) {
         Task { @MainActor [weak self] in
+            // TODO: Move to model
             let stock = await self?.stockProvider?.get()
             self?.applyUpdates(stock)
         }
+    }
+    
+    @objc private func startStopAction(_ sender: UIButton) {
+        if sender.tag == 0 {
+            sender.setImage(UIImage(systemName: "power.circle"), for: .normal)
+            sender.tag = 1
+            startUpdates()
+        } else {
+            sender.setImage(UIImage(systemName: "power.circle.fill"), for: .normal)
+            sender.tag = 0
+            stopUpdates()
+        }
+    }
+    
+    @objc private func sortControlAction(_ sender: UISegmentedControl) {
+        displayLink?.isPaused = true
+        
+        applyUpdatesAndSort(dataSource.snapshot().itemIdentifiers)
+
+        displayLink?.isPaused = false
     }
 }
 
@@ -119,6 +153,26 @@ private extension StockListViewController {
             snapshot.reconfigureItems(toChange)
             snapshot.appendItems(toAdd)
         }
+        
+        applyUpdatesAndSort(snapshot.itemIdentifiers)
+    }
+    
+    private func applyUpdatesAndSort(_ stock: [Stock]) {
+        let sorter: (Stock, Stock) -> Bool
+        if sortControl.selectedSegmentIndex == 1 {
+            sorter = { $0.price > $1.price }
+        } else if sortControl.selectedSegmentIndex == 2 {
+            sorter = { $0.change > $1.change }
+        } else {
+            sorter = { $0.symbol < $1.symbol }
+        }
+        var stock = stock
+        stock.sort(by: sorter)
+        
+        var snapshot = Snapshot()
+        snapshot.appendSections([0])
+        snapshot.appendItems(stock)
+
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 }
