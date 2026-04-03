@@ -13,4 +13,5 @@ protocol StockProvider: Sendable {
     func start() async
     func stop() async
     func get() async -> [Stock]
+    func get(symbol: String) async -> Stock?
 }

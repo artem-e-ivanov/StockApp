@@ -19,8 +19,8 @@ final class RootCoordinator: Coordinator {
     func start() {
         navController = UINavigationController()
         
-        if let featureProvider = AppDIContainer.shared.resolve(FeatureProvider.self) {
-            coordinators.append(contentsOf: featureProvider.getFeatures().map({
+        if let featureModulesProvider = AppDIContainer.shared.resolve(FeatureModulesProvider.self) {
+            coordinators.append(contentsOf: featureModulesProvider.getFeatureModules().map({
                 $0.makeCoordinator()
             }))
         }
@@ -36,10 +36,10 @@ final class RootCoordinator: Coordinator {
         }
         
         coordinator.start()
-        
-        if let coordinatorViewController = coordinator.viewController {
-            navController?.setViewControllers([coordinatorViewController], animated: false)
-        }
+        guard let coordinatorViewController = coordinator.viewController else { return }
+
+        navController?.setViewControllers([coordinatorViewController], animated: false)
+
         coordinator.coordinate(with: remainingRoutes.joined(separator: "/"))
     }
 }

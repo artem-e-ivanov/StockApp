@@ -21,11 +21,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     private func setup() {
         Task { [weak self] in
+            // Create an outer instance and retain it to make it a singleton
+
             // Setup stock provider mock
-            /*_ = AppDIContainer.shared.register(StockProvider.self) { _ in
-                StockProviderMock()
+            /*let stockProviderMock = StockProviderMock()
+            _ = AppDIContainer.shared.register(StockProvider.self) { _ in
+                stockProviderMock
             }*/
-            // Setup stock provider web
+            
+            // Setup stock provider from web
             if let endpoint = URL(string: "wss://ws.postman-echo.com/raw") {
                 let stockProvider = await StockProviderWeb(endpoint: endpoint)
                 _ = AppDIContainer.shared.register(StockProvider.self) { _ in
@@ -34,12 +38,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
 
             // Setup features provider and start it
-            let featureProvider = StockFeatureProvider()
-            _ = AppDIContainer.shared.register(FeatureProvider.self) { _ in
-                featureProvider
+            let featureModulesProvider = StockFeatureModulesProvider()
+            _ = AppDIContainer.shared.register(FeatureModulesProvider.self) { _ in
+                featureModulesProvider
             }
             self?.startupState = .loadingFeatures(false)
-            await featureProvider.start()
+            await featureModulesProvider.start()
             self?.startupState = .loadingFeatures(true)
 
             // App startup is completed

@@ -18,7 +18,7 @@ actor StockProviderWeb: StockProvider {
 
     private var webSocket: WebSocket
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
-    private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Double]())
+    private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var senderTask: Task<Void, Never>?
     
     init(endpoint: URL) async {
@@ -55,15 +55,24 @@ actor StockProviderWeb: StockProvider {
         senderTask?.cancel()
         senderTask = nil
         
-        webSocket.disconnect(closeCode: CloseCode.normal.rawValue)
-        
-        // TODO: Start a timed check for no server reaction
+        if _status == .connecting {
+            webSocket.forceDisconnect()
+            _status = .offline
+        } else {
+            webSocket.disconnect(closeCode: CloseCode.normal.rawValue)
+        }
     }
     
     func get() async -> [Stock] {
         bufferLock.withLock { buffer in
             defer { buffer.removeAll() }
             return Array(buffer.values)
+        }
+    }
+    
+    func get(symbol: String) async -> Stock? {
+        cacheLock.withLock { cache in
+            cache[symbol]
         }
     }
     
@@ -97,18 +106,15 @@ actor StockProviderWeb: StockProvider {
                     continue
                 }
                 
-                let stock = await self?.cacheLock.withLock { cache in
+                let price = await self?.cacheLock.withLock { cache in
                     let change = Double.random(in: -1...1)
-                    let price = cache[randomSymbol] ?? Double.random(in: 100...1000)
-                    cache[randomSymbol] = price + change
-
-                    return Stock(symbol: randomSymbol,
-                                 price: price,
-                                 change: change)
+                    let price = cache[randomSymbol]?.price ?? Double.random(in: 100...1000)
+                    
+                    return price + change
                 }
-                guard let stock = stock else { continue }
+                guard let price = price else { continue }
 
-                let message = randomSymbol + ":\(stock.price)"
+                let message = randomSymbol + ":\(price)"
                 await self?.webSocket.write(string: message)
 
                 try? await Task.sleep(for: .milliseconds(100))
@@ -127,14 +133,20 @@ actor StockProviderWeb: StockProvider {
               let price = Double(components[1]) else { return }
 
         let symbol = String(components[0])
+
+        // Update cache and detect price difference
         let stock = cacheLock.withLock { cache in
-            let change = price - (cache[symbol] ?? price)
+            let change = price - (cache[symbol]?.price ?? price)
+            cache[symbol] = Stock(symbol: symbol,
+                                  price: price,
+                                  change: change)
 
-            return Stock(symbol: symbol,
-                         price: price,
-                         change: change)
+            return cache[symbol]
         }
+        
+        guard let stock = stock else { return }
 
+        // Add an event into the buffer
         bufferLock.withLock { buffer in
             buffer[symbol] = stock
         }

@@ -39,7 +39,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func startRootCordinator() {
         rootCoordinator = RootCoordinator()
         rootCoordinator?.start()
-        rootCoordinator?.coordinate(with: Features.stockList.rawValue)
+        rootCoordinator?.coordinate(with: Feature.stockList.rawValue)
 
         window?.rootViewController = rootCoordinator?.viewController
     }

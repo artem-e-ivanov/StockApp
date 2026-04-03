@@ -14,6 +14,7 @@ final class StockListViewModel {
 
     @Published var sortOrder = StockListSortOrder.title
     @Published var stockProviderStatus = StockProviderStatus.offline
+    var onStockSelected: ((Stock) -> Void)?
     
     private var stockProvider: StockProvider!
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Stock>
@@ -63,6 +64,12 @@ final class StockListViewModel {
         }
         
         await applyUpdatesAndSort(snapshot)
+    }
+    
+    func viewTapsOnStock(_ indexPath: IndexPath) {
+        guard let stock = dataSource.itemIdentifier(for: indexPath) else { return }
+        
+        onStockSelected?(stock)
     }
     
     private func applyUpdatesAndSort(_ snapshot: Snapshot) async {

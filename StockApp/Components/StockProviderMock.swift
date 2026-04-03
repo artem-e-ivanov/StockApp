@@ -14,7 +14,7 @@ actor StockProviderMock: StockProvider {
     @Published private var _status: StockProviderStatus = .offline
 
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
-    private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Double]())
+    private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var task: Task<Void, Never>?
 
     deinit {
@@ -34,19 +34,20 @@ actor StockProviderMock: StockProvider {
 
                 let stock = await self?.cacheLock.withLock { cache in
                     let change = Double.random(in: -1...1)
-                    let price = cache[randomSymbol] ?? Double.random(in: 100...1000)
-                    cache[randomSymbol] = price + change
+                    let price = cache[randomSymbol]?.price ?? Double.random(in: 100...1000)
+                    cache[randomSymbol] = Stock(symbol: randomSymbol,
+                                                price: price + change,
+                                                change: change)
 
-                    return Stock(symbol: randomSymbol,
-                                 price: price,
-                                 change: change)
+                    return cache[randomSymbol]
                 }
-                guard let stock = stock else { continue }
-
-                await self?.bufferLock.withLock { buffer in
-                    buffer[randomSymbol] = stock
+                if let stock = stock {
+                    await self?.bufferLock.withLock { buffer in
+                        buffer[randomSymbol] = stock
+                    }
                 }
                 
+                await Task.yield()
                 try? await Task.sleep(for: .milliseconds(50))
             }
         }
@@ -62,6 +63,12 @@ actor StockProviderMock: StockProvider {
         bufferLock.withLock { buffer in
             defer { buffer.removeAll() }
             return Array(buffer.values)
+        }
+    }
+    
+    func get(symbol: String) async -> Stock? {
+        cacheLock.withLock { cache in
+            cache[symbol]
         }
     }
 }

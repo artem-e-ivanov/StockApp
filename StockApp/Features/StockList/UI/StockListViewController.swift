@@ -71,6 +71,7 @@ final class StockListViewController: UIViewController {
             tableView.heightAnchor.constraint(equalTo: view.heightAnchor)
         ])
         tableView.register(StockListCell.self, forCellReuseIdentifier: StockListCell.reuseId)
+        tableView.delegate = self
     }
     
     private func setupDataSource() {
@@ -124,5 +125,13 @@ final class StockListViewController: UIViewController {
                 startButton.tintColor = .systemGreen
                 displayLink.isPaused = false
         }
+    }
+}
+
+extension StockListViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: false)
+        
+        viewModel.viewTapsOnStock(indexPath)
     }
 }
