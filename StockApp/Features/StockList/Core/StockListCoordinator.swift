@@ -12,7 +12,7 @@ final class StockListCoordinator: Coordinator {
     var viewController: UIViewController?
     
     func start() {
-        viewController = StockListViewController()
+        viewController = StockListViewController(viewModel: StockListViewModel())
     }
     
     func coordinate(with path: String) {

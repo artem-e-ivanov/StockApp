@@ -7,12 +7,16 @@
 
 import os
 import Foundation
+import Combine
 
 actor StockProviderMock: StockProvider {
+    var status: AnyPublisher<StockProviderStatus, Never> { $_status.eraseToAnyPublisher() }
+    @Published private var _status: StockProviderStatus = .offline
+
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Double]())
     private var task: Task<Void, Never>?
-    
+
     deinit {
         task?.cancel()
     }
@@ -20,6 +24,10 @@ actor StockProviderMock: StockProvider {
     func start() async {
         guard task == nil else { return }
         
+        _status = .connecting
+        try? await Task.sleep(for: .milliseconds(500))
+        _status = .online
+
         task = Task { [weak self] in
             while !Task.isCancelled {
                 guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else { continue }
@@ -47,6 +55,7 @@ actor StockProviderMock: StockProvider {
     func stop() async {
         task?.cancel()
         task = nil
+        _status = .offline
     }
     
     func get() async -> [Stock] {

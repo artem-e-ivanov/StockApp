@@ -22,14 +22,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func setup() {
         Task { [weak self] in
             // Setup stock provider mock
-            /*let stockProvider = StockProviderMock()
-            _ = AppDIContainer.shared.register(StockProvider.self) { _ in
-                stockProvider
+            /*_ = AppDIContainer.shared.register(StockProvider.self) { _ in
+                StockProviderMock()
             }*/
-                        
             // Setup stock provider web
             if let endpoint = URL(string: "wss://ws.postman-echo.com/raw") {
-                let stockProvider = StockProviderWeb(endpoint: endpoint)
+                let stockProvider = await StockProviderWeb(endpoint: endpoint)
                 _ = AppDIContainer.shared.register(StockProvider.self) { _ in
                     stockProvider
                 }

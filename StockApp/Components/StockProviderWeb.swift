@@ -7,43 +7,57 @@
 
 import os
 import Foundation
+import Combine
 import Starscream
 
 actor StockProviderWeb: StockProvider {
     var endpoint: URL
-    private var webSocket: WebSocket?
+
+    var status: AnyPublisher<StockProviderStatus, Never> { $_status.eraseToAnyPublisher() }
+    @Published private var _status: StockProviderStatus = .offline
+
+    private var webSocket: WebSocket
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Double]())
     private var senderTask: Task<Void, Never>?
     
-    init(endpoint: URL) {
+    init(endpoint: URL) async {
         self.endpoint = endpoint
-    }
-    
-    deinit {
-        webSocket?.disconnect()
-    }
-    
-    func start() async {
-        guard webSocket == nil else { return }
-        
+
         var request = URLRequest(url: endpoint)
         request.timeoutInterval = 3
-        webSocket = WebSocket(request: request, engine: WSEngine(transport: FoundationTransport()))
-        webSocket?.onEvent = { [weak self] event in
+
+        self.webSocket = WebSocket(request: request, engine: WSEngine(transport: FoundationTransport()))
+        webSocket.onEvent = { [weak self] event in
             Task {
                 await self?.onEvent(event)
             }
         }
-        webSocket?.connect()
+    }
+    
+    deinit {
+        webSocket.forceDisconnect()
+    }
+    
+    func start() async {
+        guard _status == .offline else { return }
+        
+        _status = .connecting
+
+        webSocket.connect()
     }
     
     func stop() async {
+        guard _status != .offline else { return }
+        
+        _status = .connecting
+
         senderTask?.cancel()
         senderTask = nil
         
-        webSocket?.disconnect()
-        webSocket = nil
+        webSocket.disconnect(closeCode: CloseCode.normal.rawValue)
+        
+        // TODO: Start a timed check for no server reaction
     }
     
     func get() async -> [Stock] {
@@ -56,20 +70,27 @@ actor StockProviderWeb: StockProvider {
     private func onEvent(_ event: WebSocketEvent) async {
         if case .connected(_) = event {
             onConnected()
-        }
-        if case .disconnected(_, _) = event {
-            onDisconnected()
-        }
-        if case .text(let string) = event {
+        } else if case .text(let string) = event {
             onText(string)
+        } else {
+            _status = .connecting
+            senderTask?.cancel()
+            senderTask = nil
+
+            if case .disconnected(_, _) = event {
+                onDisconnected()
+            }
+            if case .error(_) = event {
+                onDisconnected()
+            }
+            if case .cancelled = event {
+                onDisconnected()
+            }
         }
-        if case .error(let error) = event {
-            print("socker error: \(error)")
-        }
-        // TODO: Handle reconnection
     }
     
     private func onConnected() {
+        _status = .online
         senderTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else {
@@ -88,7 +109,7 @@ actor StockProviderWeb: StockProvider {
                 guard let stock = stock else { continue }
 
                 let message = randomSymbol + ":\(stock.price)"
-                await self?.webSocket?.write(string: message)
+                await self?.webSocket.write(string: message)
 
                 try? await Task.sleep(for: .milliseconds(100))
             }
@@ -96,8 +117,7 @@ actor StockProviderWeb: StockProvider {
     }
     
     private func onDisconnected() {
-        senderTask?.cancel()
-        senderTask = nil
+        _status = .offline
     }
     
     private func onText(_ string: String) {

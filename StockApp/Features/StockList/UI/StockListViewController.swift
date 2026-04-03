@@ -6,17 +6,27 @@
 //
 
 import UIKit
+import Combine
 
 @MainActor
 final class StockListViewController: UIViewController {
-    private typealias DataSource = UITableViewDiffableDataSource<Int, Stock>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Stock>
+    private let viewModel: StockListViewModel
 
+    private var startButton: UIButton!
     private var sortControl: UISegmentedControl!
     private var tableView: UITableView!
-    private var dataSource: DataSource!
-    private var displayLink: CADisplayLink?
-    private var stockProvider: StockProvider?
+
+    private var displayLink: CADisplayLink!
+    private var bag = Set<AnyCancellable>()
+    
+    init(viewModel: StockListViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,33 +34,32 @@ final class StockListViewController: UIViewController {
         setupUI()
         setupDataSource()
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        stopUpdates()
+        displayLink.isPaused = true
+        displayLink.invalidate()
     }
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        navigationItem.title = "Stock"
+        navigationItem.title = String(localized: "Stock")
         
-        let startButton = UIButton()
-        startButton.tag = 0
+        displayLink = CADisplayLink(target: self, selector: #selector(tick))
+        displayLink.isPaused = true
+        displayLink.add(to: .main, forMode: .common)
+
+        startButton = UIButton()
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: startButton)
         startButton.setImage(UIImage(systemName: "power.circle.fill"), for: .normal)
         startButton.addTarget(self, action: #selector(startStopAction), for: .primaryActionTriggered)
-        let leftButtonItem = UIBarButtonItem(customView: startButton)
-        navigationItem.leftBarButtonItem = leftButtonItem
 
-        let sortControl = UISegmentedControl()
+        sortControl = UISegmentedControl(items: StockListSortOrder.allCases.map { $0.localized })
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: sortControl)
         sortControl.addTarget(self, action: #selector(sortControlAction), for: .valueChanged)
-        let rightButtonItem = UIBarButtonItem(customView: sortControl)
-        navigationItem.rightBarButtonItem = rightButtonItem
-        sortControl.insertSegment(withTitle: "Title", at: 0, animated: false)
-        sortControl.insertSegment(withTitle: "Price", at: 1, animated: false)
-        sortControl.insertSegment(withTitle: "Change", at: 2, animated: false)
-        self.sortControl = sortControl
+        sortControl.selectedSegmentIndex = 0
 
         tableView = UITableView()
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -64,61 +73,15 @@ final class StockListViewController: UIViewController {
         tableView.register(StockListCell.self, forCellReuseIdentifier: StockListCell.reuseId)
     }
     
-    private func startUpdates() {
-        guard displayLink == nil else { return }
-        
-        Task { [weak self] in
-            await self?.stockProvider?.start()
-        }
-        displayLink = CADisplayLink(target: self, selector: #selector(tick))
-        displayLink?.add(to: .main, forMode: .common)
-    }
-    
-    private func stopUpdates() {
-        Task { [weak self] in
-            await self?.stockProvider?.stop()
-        }
-        
-        displayLink?.invalidate()
-        displayLink = nil
-    }
-    
-    @objc private func tick(_ link: CADisplayLink) {
-        Task { @MainActor [weak self] in
-            // TODO: Move to model
-            let stock = await self?.stockProvider?.get()
-            self?.applyUpdates(stock)
-        }
-    }
-    
-    @objc private func startStopAction(_ sender: UIButton) {
-        if sender.tag == 0 {
-            sender.setImage(UIImage(systemName: "power.circle"), for: .normal)
-            sender.tag = 1
-            startUpdates()
-        } else {
-            sender.setImage(UIImage(systemName: "power.circle.fill"), for: .normal)
-            sender.tag = 0
-            stopUpdates()
-        }
-    }
-    
-    @objc private func sortControlAction(_ sender: UISegmentedControl) {
-        displayLink?.isPaused = true
-        
-        applyUpdatesAndSort(dataSource.snapshot().itemIdentifiers)
-
-        displayLink?.isPaused = false
-    }
-}
-
-// Data related code
-private extension StockListViewController {
     private func setupDataSource() {
-        stockProvider = AppDIContainer.shared.resolve(StockProvider.self)
+        viewModel.$stockProviderStatus
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.updateStockProviderStatus(status)
+            }
+            .store(in: &self.bag)
         
-        dataSource = DataSource(tableView: tableView,
-                                cellProvider: { tableView, indexPath, stock in
+        viewModel.configure(tableView: tableView) { tableView, indexPath, stock in
             guard let cell = tableView.dequeueReusableCell(withIdentifier: StockListCell.reuseId,
                                                            for: indexPath) as? StockListCell else {
                 // Handle error
@@ -127,52 +90,39 @@ private extension StockListViewController {
 
             cell.configure(stock: stock)
             return cell
-        })
+        }
     }
     
-    private func applyUpdates(_ stock: [Stock]?) {
-        guard let stock = stock, !stock.isEmpty else { return }
-
-        var snapshot = dataSource.snapshot()
-        if snapshot.numberOfSections == 0 {
-            snapshot = Snapshot()
-            snapshot.appendSections([0])
-            snapshot.appendItems(stock)
-        } else {
-            var toAdd = [Stock]()
-            var toChange = [Stock]()
-            stock.forEach { newStock in
-                if let oldStock = snapshot.itemIdentifiers.first(where: { $0.symbol == newStock.symbol }) {
-                    snapshot.insertItems([newStock], afterItem: oldStock)
-                    snapshot.deleteItems([oldStock])
-                    toChange.append(newStock)
-                } else {
-                    toAdd.append(newStock)
-                }
-            }
-            snapshot.reconfigureItems(toChange)
-            snapshot.appendItems(toAdd)
+    @objc private func tick(_ link: CADisplayLink) {
+        Task {
+            await viewModel.viewNeedsData()
         }
-        
-        applyUpdatesAndSort(snapshot.itemIdentifiers)
     }
     
-    private func applyUpdatesAndSort(_ stock: [Stock]) {
-        let sorter: (Stock, Stock) -> Bool
-        if sortControl.selectedSegmentIndex == 1 {
-            sorter = { $0.price > $1.price }
-        } else if sortControl.selectedSegmentIndex == 2 {
-            sorter = { $0.change > $1.change }
-        } else {
-            sorter = { $0.symbol < $1.symbol }
+    @objc private func startStopAction(_ sender: UIButton) {
+        Task {
+            await viewModel.startStopUpdates()
         }
-        var stock = stock
-        stock.sort(by: sorter)
+    }
+    
+    @objc private func sortControlAction(_ sender: UISegmentedControl) {
+        displayLink.isPaused = true
         
-        var snapshot = Snapshot()
-        snapshot.appendSections([0])
-        snapshot.appendItems(stock)
+        viewModel.sortOrder = StockListSortOrder.allCases[sender.selectedSegmentIndex]
 
-        dataSource.apply(snapshot, animatingDifferences: false)
+        displayLink.isPaused = false
+    }
+    
+    private func updateStockProviderStatus(_ status: StockProviderStatus) {
+        displayLink.isPaused = true
+        switch status {
+            case .offline:
+                startButton.tintColor = .systemGray
+            case .connecting:
+                startButton.tintColor = .systemYellow
+            case .online:
+                startButton.tintColor = .systemGreen
+                displayLink.isPaused = false
+        }
     }
 }
