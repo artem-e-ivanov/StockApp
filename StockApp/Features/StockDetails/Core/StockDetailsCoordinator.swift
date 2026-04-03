@@ -10,6 +10,7 @@ import UIKit
 final class StockDetailsCoordinator: Coordinator {
     let route = Feature.stockDetails.rawValue
     var viewController: UIViewController?
+    // View controller must hold the model. If its life is over then there is no need to retain it.
     weak var viewModel: StockDetailsViewModel?
     
     func start() {

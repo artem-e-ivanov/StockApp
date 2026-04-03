@@ -24,10 +24,7 @@ actor StockProviderMock: StockProvider {
     func start() async {
         guard task == nil else { return }
         
-        _status = .connecting
-        try? await Task.sleep(for: .milliseconds(500))
         _status = .online
-
         task = Task { [weak self] in
             while !Task.isCancelled {
                 guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else { continue }

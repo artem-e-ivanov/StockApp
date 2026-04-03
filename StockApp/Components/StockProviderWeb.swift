@@ -50,15 +50,14 @@ actor StockProviderWeb: StockProvider {
     func stop() async {
         guard _status != .offline else { return }
         
-        _status = .connecting
-
         senderTask?.cancel()
         senderTask = nil
         
         if _status == .connecting {
-            webSocket.forceDisconnect()
             _status = .offline
+            webSocket.forceDisconnect()
         } else {
+            _status = .connecting
             webSocket.disconnect(closeCode: CloseCode.normal.rawValue)
         }
     }
