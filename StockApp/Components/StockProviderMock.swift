@@ -9,6 +9,7 @@ import os
 import Foundation
 import Combine
 
+// Simulates data changes using random symbol updates.
 actor StockProviderMock: StockProvider {
     var status: AnyPublisher<StockProviderStatus, Never> { $_status.eraseToAnyPublisher() }
     @Published private var _status: StockProviderStatus = .offline {
@@ -17,7 +18,9 @@ actor StockProviderMock: StockProvider {
         }
     }
 
+    // Buffer accumulates changed symmbols.
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
+    // Stores the list of stock symbols in order to calculate price change.
     private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var task: Task<Void, Never>?
 
@@ -33,6 +36,7 @@ actor StockProviderMock: StockProvider {
             while !Task.isCancelled {
                 guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else { continue }
 
+                // Generates random price change according to the previous value.
                 let stock = await self?.cacheLock.withLock { cache in
                     let change = Double.random(in: -1...1)
                     let price = cache[randomSymbol]?.price ?? Double.random(in: 100...1000)
@@ -43,6 +47,7 @@ actor StockProviderMock: StockProvider {
                     return cache[randomSymbol]
                 }
                 if let stock = stock {
+                    // Adds a new change to the buffer.
                     await self?.bufferLock.withLock { buffer in
                         buffer[randomSymbol] = stock
                     }
@@ -60,6 +65,7 @@ actor StockProviderMock: StockProvider {
         _status = .offline
     }
     
+    // Returns current buffer contents and drains the buffer.
     func get() async -> [Stock] {
         bufferLock.withLock { buffer in
             defer { buffer.removeAll() }
@@ -67,6 +73,7 @@ actor StockProviderMock: StockProvider {
         }
     }
     
+    // Returns current state of a specific symbol.
     func get(symbol: String) async -> Stock? {
         cacheLock.withLock { cache in
             cache[symbol]

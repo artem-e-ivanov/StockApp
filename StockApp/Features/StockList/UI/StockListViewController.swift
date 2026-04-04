@@ -109,9 +109,13 @@ final class StockListViewController: UIViewController {
     @objc private func sortControlAction(_ sender: UISegmentedControl) {
         displayLink.isPaused = true
         
-        viewModel.sortOrder = StockListSortOrder.allCases[sender.selectedSegmentIndex]
-
-        displayLink.isPaused = false
+        Task { [weak self] in
+            await self?.viewModel.setSortOrder(StockListSortOrder.allCases[sender.selectedSegmentIndex])
+            
+            if self?.viewModel.stockProviderStatus == .online {
+                self?.displayLink.isPaused = false
+            }
+        }
     }
     
     private func updateStockProviderStatus(_ status: StockProviderStatus) {

@@ -21,12 +21,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
         
+        // Display splash screen again in order to wit for the app's configuration
+        // and startup routines to complete their async operations.
         let splashViewController = UIStoryboard(name: "LaunchScreen", bundle: nil).instantiateInitialViewController()
 
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = splashViewController
         window?.makeKeyAndVisible()
 
+        // Wait for the startup to complete and start the root coordinator.
         appDelegate.$startupState
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in

@@ -20,24 +20,53 @@
 			remoteGlobalIDString = 8B4018DC2F7D9CA900A2849A;
 			remoteInfo = StockApp;
 		};
-		8B4018FE2F7D9CAA00A2849A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 8B4018D52F7D9CA900A2849A /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8B4018DC2F7D9CA900A2849A;
-			remoteInfo = StockApp;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		8B4018DD2F7D9CA900A2849A /* StockApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StockApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B4018F32F7D9CAA00A2849A /* StockAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8B4018FD2F7D9CAA00A2849A /* StockAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StockAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B4019112F7D9CC300A2849A /* README.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = README.md; sourceTree = "<group>"; };
 		8BC946C32F7FB94F004D1930 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8B3018972F80FBEE007C354E /* Exceptions for "StockApp" folder in "StockAppTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				App/Core/AppDIContainer.swift,
+				App/Core/AppLogger.swift,
+				App/Core/RootCoordinator.swift,
+				Core/Enums/Feature.swift,
+				Core/Enums/StockProviderStatus.swift,
+				Core/Protocols/Coordinator.swift,
+				Core/Protocols/FeatureModule.swift,
+				Core/Protocols/FeatureModulesProvider.swift,
+				Core/Protocols/Logger.swift,
+				Core/Protocols/StockProvider.swift,
+				Core/Stock.swift,
+				Features/StockList/Core/StockListSortOrder.swift,
+				Features/StockList/Core/StockListViewModel.swift,
+			);
+			target = 8B4018F22F7D9CAA00A2849A /* StockAppTests */;
+		};
+		8B3018A32F8101A5007C354E /* Exceptions for "Tests" folder in "StockApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				IntegrationMocks.swift,
+				IntegrationTests.swift,
+				StockListViewModelTests.swift,
+			);
+			target = 8B4018DC2F7D9CA900A2849A /* StockApp */;
+		};
+		8B3018A52F8101A8007C354E /* Exceptions for "Tests" folder in "StockAppTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				IntegrationMocks.swift,
+				IntegrationTests.swift,
+				StockListViewModelTests.swift,
+			);
+			target = 8B4018F22F7D9CAA00A2849A /* StockAppTests */;
+		};
 		8B4019052F7D9CAA00A2849A /* Exceptions for "StockApp" folder in "StockApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -48,10 +77,20 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		8B30189E2F810185007C354E /* Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8B3018A32F8101A5007C354E /* Exceptions for "Tests" folder in "StockApp" target */,
+				8B3018A52F8101A8007C354E /* Exceptions for "Tests" folder in "StockAppTests" target */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		8B4018DF2F7D9CA900A2849A /* StockApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				8B4019052F7D9CAA00A2849A /* Exceptions for "StockApp" folder in "StockApp" target */,
+				8B3018972F80FBEE007C354E /* Exceptions for "StockApp" folder in "StockAppTests" target */,
 			);
 			path = StockApp;
 			sourceTree = "<group>";
@@ -75,19 +114,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8B4018FA2F7D9CAA00A2849A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		8B4018D42F7D9CA900A2849A = {
 			isa = PBXGroup;
 			children = (
+				8B30189E2F810185007C354E /* Tests */,
 				8BC946C32F7FB94F004D1930 /* Localizable.xcstrings */,
 				8B4019112F7D9CC300A2849A /* README.md */,
 				8B4018DF2F7D9CA900A2849A /* StockApp */,
@@ -100,7 +133,6 @@
 			children = (
 				8B4018DD2F7D9CA900A2849A /* StockApp.app */,
 				8B4018F32F7D9CAA00A2849A /* StockAppTests.xctest */,
-				8B4018FD2F7D9CAA00A2849A /* StockAppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -121,6 +153,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				8B30189E2F810185007C354E /* Tests */,
 				8B4018DF2F7D9CA900A2849A /* StockApp */,
 			);
 			name = StockApp;
@@ -152,26 +185,6 @@
 			productReference = 8B4018F32F7D9CAA00A2849A /* StockAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		8B4018FC2F7D9CAA00A2849A /* StockAppUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8B40190E2F7D9CAA00A2849A /* Build configuration list for PBXNativeTarget "StockAppUITests" */;
-			buildPhases = (
-				8B4018F92F7D9CAA00A2849A /* Sources */,
-				8B4018FA2F7D9CAA00A2849A /* Frameworks */,
-				8B4018FB2F7D9CAA00A2849A /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				8B4018FF2F7D9CAA00A2849A /* PBXTargetDependency */,
-			);
-			name = StockAppUITests;
-			packageProductDependencies = (
-			);
-			productName = StockAppUITests;
-			productReference = 8B4018FD2F7D9CAA00A2849A /* StockAppUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -187,10 +200,7 @@
 					};
 					8B4018F22F7D9CAA00A2849A = {
 						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 8B4018DC2F7D9CA900A2849A;
-					};
-					8B4018FC2F7D9CAA00A2849A = {
-						CreatedOnToolsVersion = 26.2;
+						LastSwiftMigration = 2620;
 						TestTargetID = 8B4018DC2F7D9CA900A2849A;
 					};
 				};
@@ -215,7 +225,6 @@
 			targets = (
 				8B4018DC2F7D9CA900A2849A /* StockApp */,
 				8B4018F22F7D9CAA00A2849A /* StockAppTests */,
-				8B4018FC2F7D9CAA00A2849A /* StockAppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -230,13 +239,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		8B4018F12F7D9CAA00A2849A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		8B4018FB2F7D9CAA00A2849A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -260,13 +262,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8B4018F92F7D9CAA00A2849A /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -274,11 +269,6 @@
 			isa = PBXTargetDependency;
 			target = 8B4018DC2F7D9CA900A2849A /* StockApp */;
 			targetProxy = 8B4018F42F7D9CAA00A2849A /* PBXContainerItemProxy */;
-		};
-		8B4018FF2F7D9CAA00A2849A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8B4018DC2F7D9CA900A2849A /* StockApp */;
-			targetProxy = 8B4018FE2F7D9CAA00A2849A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -468,6 +458,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -478,6 +469,7 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -489,6 +481,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -503,44 +496,6 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/StockApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/StockApp";
-			};
-			name = Release;
-		};
-		8B40190F2F7D9CAA00A2849A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.StockAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = StockApp;
-			};
-			name = Debug;
-		};
-		8B4019102F7D9CAA00A2849A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.StockAppUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = StockApp;
 			};
 			name = Release;
 		};
@@ -570,15 +525,6 @@
 			buildConfigurations = (
 				8B40190C2F7D9CAA00A2849A /* Debug */,
 				8B40190D2F7D9CAA00A2849A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8B40190E2F7D9CAA00A2849A /* Build configuration list for PBXNativeTarget "StockAppUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				8B40190F2F7D9CAA00A2849A /* Debug */,
-				8B4019102F7D9CAA00A2849A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -7,6 +7,7 @@
 
 import Foundation
 
+// Configures app's DI with external dependencies.
 class ProdBuilder: AppBuilder {
     func build() async {
         // Create an outer instance and retain it to make it a singleton

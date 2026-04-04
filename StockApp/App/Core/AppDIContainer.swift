@@ -7,6 +7,9 @@
 
 import Swinject
 
+// Provides dependency registration and resolving over Swinject.
+// Implements shared (singletone) container.
+// Swinject's inObjectScope was not used because shared instance allow more precise control and single point of entry.
 nonisolated final class AppDIContainer {
     static let shared = AppDIContainer()
     private let container = Container()

@@ -5,6 +5,7 @@
 //  Created by developer on 1/4/26.
 //
 
+// Configures app's DI for development purposes.
 class DevBuilder: AppBuilder {
     func build() async {
         // Create an outer instance and retain it to make it a singleton

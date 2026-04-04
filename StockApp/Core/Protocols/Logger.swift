@@ -7,6 +7,6 @@
 
 import UIKit
 
-nonisolated protocol Logger {
+nonisolated protocol Logger: AnyObject {
     func log(_ message: String)
 }

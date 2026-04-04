@@ -80,13 +80,6 @@ AppDIContainer
 RootCoordinator
     - Must resolve and request features from FeatureProvider.
     - Must correctly start and coordinate to the child coordinators.
-
-StockFeatureProvider
-    - Must be started before requesting any features.
-
-StockProviderMock / StockProviderWeb
-    - Must comply to reasonable timeouts and update their status on start/stop
-      calls.
     
 StockListViewModel
     - Resolves a stock provider after configuration.

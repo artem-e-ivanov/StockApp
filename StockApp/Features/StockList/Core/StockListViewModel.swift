@@ -12,17 +12,13 @@ import Combine
 final class StockListViewModel {
     typealias DataSource = UITableViewDiffableDataSource<Int, Stock>
 
-    @Published var sortOrder = StockListSortOrder.title {
-        didSet {
-            AppDIContainer.shared.resolve(Logger.self)?.log("StockList sort order changed \(sortOrder.rawValue)")
-        }
-    }
     @Published var stockProviderStatus = StockProviderStatus.offline
     var onStockSelected: ((Stock) -> Void)?
     
     private var stockProvider: StockProvider!
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Stock>
     private var dataSource: DataSource!
+    private var sortOrder: StockListSortOrder = .title
     
     func configure(tableView: UITableView, cellProvider: @escaping DataSource.CellProvider) {
         dataSource = DataSource(tableView: tableView, cellProvider: cellProvider)
@@ -44,6 +40,8 @@ final class StockListViewModel {
         }
     }
     
+    // Starts the data processing flow. Requests a list of buffered stock symbols.
+    // Detects the difference and passes it to the sorting procedure.
     func viewNeedsData() async {
         let stock = await stockProvider.get()
         var snapshot = dataSource.snapshot()
@@ -67,7 +65,19 @@ final class StockListViewModel {
             snapshot.appendItems(toAdd)
         }
         
+        // Sorting is executed on each data pass because when sorted by price or change it could land
+        // in any position of the snapshot.
+        // In case if the sorting order is always by title, then the sorting must be called only when
+        // toAdd array has items.
         await applyUpdatesAndSort(snapshot)
+    }
+    
+    func setSortOrder(_ sortOrder: StockListSortOrder) async {
+        AppDIContainer.shared.resolve(Logger.self)?.log("StockList sort order changed \(sortOrder.rawValue)")
+
+        self.sortOrder = sortOrder
+        
+        await applyUpdatesAndSort(dataSource.snapshot())
     }
     
     func viewTapsOnStock(_ indexPath: IndexPath) {

@@ -7,6 +7,8 @@
 
 import UIKit
 
+// Privides top level coordination. Can be used for main screen feature switching using tab bar ot menu.
+@MainActor
 final class RootCoordinator: Coordinator {
     let route = ""
     var viewController: UIViewController? {

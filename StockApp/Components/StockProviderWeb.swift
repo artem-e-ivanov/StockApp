@@ -10,6 +10,8 @@ import Foundation
 import Combine
 import Starscream
 
+// Proovides real-time data taken from the remote websocket.
+// Logically has the same buffer as the mock version.
 actor StockProviderWeb: StockProvider {
     var endpoint: URL
 
@@ -23,6 +25,8 @@ actor StockProviderWeb: StockProvider {
     private var webSocket: WebSocket
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
+    // Built-in periodic task for generatin random price change and sending them into the websocket.
+    // IMPROVEMENT: Better to be moved outside and used as a dependency.
     private var senderTask: Task<Void, Never>?
     
     init(endpoint: URL) async {
@@ -57,10 +61,13 @@ actor StockProviderWeb: StockProvider {
         senderTask?.cancel()
         senderTask = nil
         
+        // If user don't want to wait and wants to disconnect during the connection/disconnection flow,
+        // then close the connection forcibly.
         if _status == .connecting {
             _status = .offline
             webSocket.forceDisconnect()
         } else {
+            // Try to disconnect gracefully.
             _status = .connecting
             webSocket.disconnect(closeCode: CloseCode.normal.rawValue)
         }
@@ -79,6 +86,7 @@ actor StockProviderWeb: StockProvider {
         }
     }
     
+    // Handle incoming data and connection status.
     private func onEvent(_ event: WebSocketEvent) async {
         if case .connected(_) = event {
             onConnected()
@@ -103,6 +111,7 @@ actor StockProviderWeb: StockProvider {
     
     private func onConnected() {
         _status = .online
+        // Starts a sender task which generates random price changes according to their previous state.
         senderTask = Task { [weak self] in
             while !Task.isCancelled {
                 guard let randomSymbol = StockSymbolListProvider.symbols.randomElement() else {
