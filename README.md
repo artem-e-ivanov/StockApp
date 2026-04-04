@@ -68,10 +68,14 @@ deep link handling and for presentation of features (UI components).
 
 # Testing
 
+Loose coupling with protocols allow to mock any dependency and to control
+the desired behavior.
+
 The following components are subjects for testing:
 
 AppDIContainer
-    - Services of the shared instance must not be resolved by AppDIContainer() instances and vice-versa.
+    - Services of the shared instance must not be resolved by AppDIContainer()
+      instances and vice-versa.
 
 RootCoordinator
     - Must resolve and request features from FeatureProvider.
@@ -81,10 +85,12 @@ StockFeatureProvider
     - Must be started before requesting any features.
 
 StockProviderMock / StockProviderWeb
-    - Must comply to reasonable timeouts and update their status on start/stop calls.
+    - Must comply to reasonable timeouts and update their status on start/stop
+      calls.
     
 StockListViewModel
     - Resolves a stock provider after configuration.
     - Translates stock providers status changes through stockProviderStatus var.
     - Reacts on start/stop calls and notifies its stock provider.
-    - Reacts on sorting requests and passes the correct data from stock provider to the UI (table view and data source).
+    - Reacts on sorting requests and passes the correct data from stock provider
+      to the UI (table view and data source).

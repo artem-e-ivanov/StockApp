@@ -26,6 +26,8 @@ final class StockListCoordinator: Coordinator {
     }
     
     func coordinate(with path: String) {
+        AppDIContainer.shared.resolve(Logger.self)?.log("StockList coordinating to \(path)")
+
         guard let stockDetailsCoordinator = stockDetailsCoordinator else { return }
 
         let routes = path.components(separatedBy: "/")

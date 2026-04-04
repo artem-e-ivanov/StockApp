@@ -16,6 +16,8 @@ final class StockDetailsViewModel {
     func configure(_ symbol: String) {
         self.symbol = symbol
         stockProvider = AppDIContainer.shared.resolve(StockProvider.self)
+        
+        AppDIContainer.shared.resolve(Logger.self)?.log("StockDetails avtivated with symbol \(symbol)")
     }
     
     func viewNeedsData() async -> Stock? {

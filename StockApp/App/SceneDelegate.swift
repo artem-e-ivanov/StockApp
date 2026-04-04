@@ -37,6 +37,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     func startRootCordinator() {
+        AppDIContainer.shared.resolve(Logger.self)?.log("Starting root coordinator")
+        
         rootCoordinator = RootCoordinator()
         rootCoordinator?.start()
         rootCoordinator?.coordinate(with: Feature.stockList.rawValue)

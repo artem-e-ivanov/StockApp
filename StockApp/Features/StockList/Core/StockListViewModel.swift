@@ -12,7 +12,11 @@ import Combine
 final class StockListViewModel {
     typealias DataSource = UITableViewDiffableDataSource<Int, Stock>
 
-    @Published var sortOrder = StockListSortOrder.title
+    @Published var sortOrder = StockListSortOrder.title {
+        didSet {
+            AppDIContainer.shared.resolve(Logger.self)?.log("StockList sort order changed \(sortOrder.rawValue)")
+        }
+    }
     @Published var stockProviderStatus = StockProviderStatus.offline
     var onStockSelected: ((Stock) -> Void)?
     

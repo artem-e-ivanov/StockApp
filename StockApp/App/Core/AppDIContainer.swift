@@ -7,7 +7,7 @@
 
 import Swinject
 
-final class AppDIContainer {
+nonisolated final class AppDIContainer {
     static let shared = AppDIContainer()
     private let container = Container()
     

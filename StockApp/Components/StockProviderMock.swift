@@ -11,7 +11,11 @@ import Combine
 
 actor StockProviderMock: StockProvider {
     var status: AnyPublisher<StockProviderStatus, Never> { $_status.eraseToAnyPublisher() }
-    @Published private var _status: StockProviderStatus = .offline
+    @Published private var _status: StockProviderStatus = .offline {
+        didSet {
+            AppDIContainer.shared.resolve(Logger.self)?.log("StockProviderMock status \(_status)")
+        }
+    }
 
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())
     private var cacheLock = OSAllocatedUnfairLock(initialState: [String: Stock]())

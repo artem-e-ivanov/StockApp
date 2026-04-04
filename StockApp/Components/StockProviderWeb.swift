@@ -14,7 +14,11 @@ actor StockProviderWeb: StockProvider {
     var endpoint: URL
 
     var status: AnyPublisher<StockProviderStatus, Never> { $_status.eraseToAnyPublisher() }
-    @Published private var _status: StockProviderStatus = .offline
+    @Published private var _status: StockProviderStatus = .offline {
+        didSet {
+            AppDIContainer.shared.resolve(Logger.self)?.log("StockProviderMock status \(_status)")
+        }
+    }
 
     private var webSocket: WebSocket
     private var bufferLock = OSAllocatedUnfairLock(initialState: [String: Stock]())

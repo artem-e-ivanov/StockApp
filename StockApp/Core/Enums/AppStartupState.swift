@@ -7,8 +7,8 @@
 
 // Represents the sequential app's launch state.
 enum AppStartupState {
+    case none
     case configuring
-    case loadingFeatures(Bool)
     case ready
 }
 

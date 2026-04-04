@@ -20,6 +20,8 @@ final class StockDetailsCoordinator: Coordinator {
     }
     
     func coordinate(with path: String) {
+        AppDIContainer.shared.resolve(Logger.self)?.log("StockDetails coordinating to \(path)")
+
         viewModel?.configure(path)
     }
 }

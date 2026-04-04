@@ -27,6 +27,8 @@ final class RootCoordinator: Coordinator {
     }
     
     func coordinate(with path: String) {
+        AppDIContainer.shared.resolve(Logger.self)?.log("Root coordinating to \(path)")
+
         let routes = path.components(separatedBy: "/")
         let remainingRoutes = routes.dropFirst()
 

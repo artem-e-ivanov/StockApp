@@ -10,6 +10,8 @@ final class StockListFeatureModule: FeatureModule {
     var feature: Feature { .stockList }
     
     func makeCoordinator() -> any Coordinator {
-        StockListCoordinator()
+        AppDIContainer.shared.resolve(Logger.self)?.log("StockList feature activated")
+
+        return StockListCoordinator()
     }
 }

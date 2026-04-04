@@ -8,7 +8,7 @@
 import UIKit
 
 // Provides visual presentation of UI elements and coordination with provided path.
-protocol Coordinator: AnyObject {
+protocol Coordinator {
     // Represents current segment of a navigation path.
     var route: String { get }
     // Provides visual representation of UI element.
