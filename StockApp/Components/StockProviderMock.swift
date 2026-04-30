@@ -31,6 +31,9 @@ actor StockProviderMock: StockProvider {
     func start() async {
         guard task == nil else { return }
         
+        _status = .connecting
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+
         _status = .online
         task = Task { [weak self] in
             while !Task.isCancelled {

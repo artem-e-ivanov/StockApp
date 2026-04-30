@@ -5,71 +5,47 @@
 //  Created by developer on 1/4/26.
 //
 
-import UIKit
+import Foundation
+import Observation
 import Combine
 
 @MainActor
+@Observable
 final class StockListViewModel {
-    typealias DataSource = UITableViewDiffableDataSource<Int, Stock>
-
-    @Published var stockProviderStatus = StockProviderStatus.offline
+    var stockProviderStatus: StockProviderStatus = .offline
+    var stockItems: [Stock] = []
+    var stockItemsVersion: Int = 0
     var onStockSelected: ((Stock) -> Void)?
     
-    private var stockProvider: StockProvider!
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<Int, Stock>
-    private var dataSource: DataSource!
+    private let stockProvider: StockProvider!
+    private var stockBuffer: [String: Stock] = [:]
     private var sortOrder: StockListSortOrder = .title
+    private var bag: Set<AnyCancellable> = []
     
-    func configure(tableView: UITableView, cellProvider: @escaping DataSource.CellProvider) {
-        dataSource = DataSource(tableView: tableView, cellProvider: cellProvider)
+    init() {
         stockProvider = AppDIContainer.shared.resolve(StockProvider.self)
-        
-        Task { [weak self] in
-            guard let self = self else { return }
-
-            let status = await self.stockProvider?.status
-            status?.assign(to: &self.$stockProviderStatus)
+        Task {
+            (await stockProvider.status)
+                .receive(on: DispatchQueue.main)
+                .assign(to: \.stockProviderStatus, on: self)
+                .store(in: &bag)
         }
+        startObserving()
     }
     
     func startStopUpdates() async {
         if stockProviderStatus == .offline {
-            await stockProvider?.start()
+            await stockProvider.start()
         } else {
-            await stockProvider?.stop()
+            await stockProvider.stop()
         }
     }
-    
+
     // Starts the data processing flow. Requests a list of buffered stock symbols.
     // Detects the difference and passes it to the sorting procedure.
     func viewNeedsData() async {
-        let stock = await stockProvider.get()
-        var snapshot = dataSource.snapshot()
-        if snapshot.numberOfSections == 0 {
-            snapshot = Snapshot()
-            snapshot.appendSections([0])
-            snapshot.appendItems(stock)
-        } else {
-            var toAdd = [Stock]()
-            var toChange = [Stock]()
-            stock.forEach { newStock in
-                if let oldStock = snapshot.itemIdentifiers.first(where: { $0.symbol == newStock.symbol }) {
-                    snapshot.insertItems([newStock], afterItem: oldStock)
-                    snapshot.deleteItems([oldStock])
-                    toChange.append(newStock)
-                } else {
-                    toAdd.append(newStock)
-                }
-            }
-            snapshot.reconfigureItems(toChange)
-            snapshot.appendItems(toAdd)
-        }
-        
-        // Sorting is executed on each data pass because when sorted by price or change it could land
-        // in any position of the snapshot.
-        // In case if the sorting order is always by title, then the sorting must be called only when
-        // toAdd array has items.
-        await applyUpdatesAndSort(snapshot)
+        let stockItems = await stockProvider.get()
+        await applyUpdatesAndSort(stockItems)
     }
     
     func setSortOrder(_ sortOrder: StockListSortOrder) async {
@@ -77,16 +53,17 @@ final class StockListViewModel {
 
         self.sortOrder = sortOrder
         
-        await applyUpdatesAndSort(dataSource.snapshot())
+        await applyUpdatesAndSort(Array(stockBuffer.values))
     }
-    
-    func viewTapsOnStock(_ indexPath: IndexPath) {
-        guard let stock = dataSource.itemIdentifier(for: indexPath) else { return }
-        
+
+    func viewTapsOnStock(_ stock: Stock) {
         onStockSelected?(stock)
     }
-    
-    private func applyUpdatesAndSort(_ snapshot: Snapshot) async {
+
+    private func applyUpdatesAndSort(_ stockItems: [Stock]) async {
+        stockItems.forEach {
+            stockBuffer[$0.symbol] = $0
+        }
         let sorter: (Stock, Stock) -> Bool
         switch sortOrder {
             case .title:
@@ -96,13 +73,22 @@ final class StockListViewModel {
             case .change:
                 sorter = { $0.change > $1.change }
         }
-        var stock = snapshot.itemIdentifiers
-        stock.sort(by: sorter)
-        
-        var snapshot = Snapshot()
-        snapshot.appendSections([0])
-        snapshot.appendItems(stock)
-
-        await dataSource.apply(snapshot, animatingDifferences: false)
+        self.stockItems = stockBuffer.values.sorted(by: sorter)
+        stockItemsVersion += 1
+    }
+    
+    private func startObserving() {
+        withObservationTracking { [weak self] in
+            _ = self?.stockProviderStatus
+        } onChange: { [weak self] in
+            Task {
+                await Task.yield()
+                let status = await self?.stockProviderStatus
+                if status == .online {
+                    await self?.viewNeedsData()
+                }
+                await self?.startObserving()
+            }
+        }
     }
 }

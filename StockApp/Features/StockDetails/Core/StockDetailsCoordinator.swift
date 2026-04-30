@@ -6,22 +6,41 @@
 //
 
 import UIKit
+import SwiftUI
 
 final class StockDetailsCoordinator: Coordinator {
-    let route = Feature.stockDetails.rawValue
-    var viewController: UIViewController?
-    // View controller must hold the model. If its life is over then there is no need to retain it.
-    weak var viewModel: StockDetailsViewModel?
+    var path: Binding<StockAppPath>
+
+    var parent: (any Coordinator)? = nil
+    private(set) var children: [any Coordinator] = []
     
-    func start() {
-        let viewModel = StockDetailsViewModel()
-        viewController = UINavigationController(rootViewController: StockDetailsViewController(viewModel: viewModel))
-        self.viewModel = viewModel
+    init(path: Binding<StockAppPath>) {
+        self.path = path
     }
     
-    func coordinate(with path: String) {
-        AppDIContainer.shared.resolve(Logger.self)?.log("StockDetails coordinating to \(path)")
+    @ViewBuilder func buildView() -> some View {
+        let stockSymbol = path.wrappedValue.path.last?.components(separatedBy: "=").last ?? ""
+        StockDetailsView(stockSymbol: stockSymbol)
+    }
+    
+    func canCoordinate(for item: String) -> Bool {
+        item.hasPrefix(Feature.stockDetails.rawValue)
+    }
+}
 
-        viewModel?.configure(path)
+struct StockDetailsView: UIViewControllerRepresentable {
+    var stockSymbol: String
+    @State var viewModel: StockDetailsViewModel = StockDetailsViewModel()
+
+    func makeUIViewController(context: Context) -> some UIViewController {
+        viewModel.configure(context.coordinator)
+        return StockDetailsViewController(viewModel: viewModel)
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
+    }
+    
+    func makeCoordinator() -> String {
+        stockSymbol
     }
 }

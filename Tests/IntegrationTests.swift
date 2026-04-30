@@ -16,7 +16,7 @@ struct IntegrationTests {
         let logger2 = AppLogger()
         
         _ = localContainer.register(Logger.self) { _ in
-            logger1
+            AppLogger()
         }
         _ = sharedContainer.register(Logger.self) { _ in
             logger2

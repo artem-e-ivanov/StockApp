@@ -5,10 +5,11 @@
 //  Created by developer on 1/4/26.
 //
 
-import UIKit
+import SwiftUI
 import Combine
 
 @MainActor
+@Observable
 final class StockDetailsViewModel {
     public var symbol: String!
     private var stockProvider: StockProvider!

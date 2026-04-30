@@ -28,5 +28,9 @@ final class StockFeatureModulesProvider: FeatureModulesProvider {
     func getFeatureModules() -> [FeatureModule] {
         return featureModules
     }
+    
+    func getFeature(feature: Feature) -> (any FeatureModule)? {
+        featureModules.first { $0.feature == feature }
+    }
 }
 

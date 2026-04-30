@@ -7,7 +7,9 @@
 
 import Foundation
 
-nonisolated struct Stock: Hashable, Sendable {
+nonisolated struct Stock: Hashable, Sendable, Identifiable {
+    var id: String { symbol }
+
     let symbol: String
     let price: Double
     let change: Double

@@ -5,7 +5,9 @@
 //  Created by developer on 1/4/26.
 //
 
+import SwiftUI
+
 protocol FeatureModule {
     var feature: Feature { get }
-    func makeCoordinator() -> Coordinator
+    func makeCoordinator(path: Binding<StockAppPath>) -> any Coordinator
 }

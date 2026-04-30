@@ -8,4 +8,5 @@
 protocol FeatureModulesProvider {
     func start() async
     func getFeatureModules() -> [FeatureModule]
+    func getFeature(feature: Feature) -> FeatureModule?
 }
